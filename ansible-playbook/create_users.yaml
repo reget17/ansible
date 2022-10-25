@@ -1,0 +1,12 @@
+---
+- hosts: all
+  become: true
+  vars:
+# Choose user_creating_list 1 if only default unix users
+# Choose user_creating_list 2 if unix + Irina + Sasha + Polina
+# Choose user_creating_list 3 if unix + Anya + Irina
+    - user_creating_list: 1
+  # vars_files: 
+  #   - var/main_123.yml
+  roles: 
+    - create_users

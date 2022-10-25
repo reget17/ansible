@@ -1,0 +1,56 @@
+﻿# sh ключа, папок, нужных прав.
+# Запуск с ключом -K, чтобы спросил пароль рута "ansible-playbook install_ssh.yml -K"
+# ansible-playbook ansible-playbook/install_ssh_1 --ask-pass -K
+- hosts: "all"
+  become_user: root
+  become_method: su
+  become: true
+  vars:
+    - uusername: "ansible"
+    - passwd: "dG1e753g-3e1W"
+
+  tasks:
+
+  - name: "Creating user ansible with admin access"
+    user:
+      name: "{{ uusername }}"
+      password: "{{ passwd | password_hash('sha512') }}"
+      uid: 2022
+      groups: wheel
+
+  - name: "Create .ssh"
+    ansible.builtin.file:
+      path: /home/{{ uusername }}/.ssh
+      state: directory
+      mode: '0700'
+      owner: "{{ uusername }}"
+      group: wheel
+
+  - name: "Create authorized_keys"
+    ansible.builtin.file:
+      path: /home/{{ uusername }}/.ssh/authorized_keys
+      state: touch
+      mode: '0600'
+      owner: "{{ uusername }}"
+      group: wheel
+
+  - name: copy ssh-key
+    copy:
+      src: /home/{{ uusername }}/.ssh/id_rsa.pub
+      dest: /home/{{ uusername }}/.ssh/authorized_keys
+      owner: "{{ uusername }}"
+      mode: '0600'
+      group: wheel
+
+  - name: "Disable sudo password for user"
+    shell: echo '{{ uusername }} ALL=(ALL)   NOPASSWD:ALL' >> /etc/sudoers
+
+  # - name: "Configure sshd"
+  #   lineinfile:
+  #     path: "/etc/ssh/sshd_config"
+  #     regex: '^PermitRootLogin\s*no'
+  #     #line: "PermitRootLogin yes"
+  #     line: "PermitRootLogin without-password"
+  #     state: present
+  #   notify:
+  #   - Restart SSHD

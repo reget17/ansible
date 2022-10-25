@@ -1,0 +1,34 @@
+# sh ключа, папок, нужных прав.
+# Запуск с ключом -K, чтобы спросил пароль рута "ansible-playbook install_ssh.yml -K"
+# ansible-playbook ansible-playbook/install_ssh_1 --ask-pass -K
+- hosts: "all"
+  become_user: root
+  become_method: su
+  become: true
+  vars:
+    - uusername: "ansible"
+    - passwd: "dG1e753g-3e1W"
+
+  tasks:
+
+  - name: "Creating user ansible with admin access"
+    user:
+      name: "{{ uusername }}"
+      password: "{{ passwd | password_hash('sha512') }}"
+      uid: 2022
+      groups: wheel
+
+  - name: Set authorized key took from file
+    authorized_key:
+      user: ansible
+      state: present
+      key: "{{ lookup('file', '/home/ansible/.ssh/id_rsa.pub') }}"
+
+  - name: "Disable sudo password for user"
+    shell: echo '{{ uusername }} ALL=(ALL)   NOPASSWD:ALL' >> /etc/sudoers | /usr/sbin/visudo -c
+    register: visudo_output
+
+  - debug:
+        msg:
+            - "{{ visudo_output.stderr_lines }}"
+            - "{{ visudo_output.stdout_lines }}"

@@ -1,0 +1,12 @@
+- hosts: "all"
+  become: true
+  tasks:
+
+  - name: Get information
+    ansible.builtin.shell: df -h
+    register: result
+
+  - local_action: 
+          module: copy 
+          content: "{{ result.results |to_nice_json }}"
+          dest: tmp/log.txt

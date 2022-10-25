@@ -1,0 +1,12 @@
+- hosts: "all" # применяем команды ко всем хостам в inventory
+  become: true # становимся привилегированным пользователем
+  
+  roles: 
+  - nginx
+  - php
+
+  tasks: # список тасков
+  - name: "Reload nginx"
+    ansible.builtin.service:
+      name: "nginx"
+      state: "reloaded"    

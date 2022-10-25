@@ -1,0 +1,39 @@
+# Добавление ssh ключа, папок, нужных прав. 
+# Запуск с ключом -K, чтобы спросил пароль рута "ansible-playbook install_ssh.yml -K"
+- hosts: "all"
+  become_user: root
+  become_method: su
+  become: true
+  vars:
+    - server_ssh_key: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDCIZZj5N6bxdsA4fxOsWKFL+Z8qXHStqmoTYw1dru6nr/Oh3mFXBPC6RfwrHT92hQkf9WYEZfYj+RGDM05qv44RwUVOYOk6Lnhjz0XC6Az7vs1CsWuFDZx4hy0byT4U/3n1GbKLBWc74OLbpxvCyYvWq2hEfJwzbJg4YH8KzEs3I3np0HMlW0+kLW4nxyDpXCHZH2UBirqd8fGB0nflIvPPohet3z/8gp0BGpuO1hacdzU3/pc5IcPJmgKK9iTOItI/iffQrJlhmv+ngmRsXRts8X415zOmbw7ml0SXaOsmVs4Erb2oAD7wuDX9mSohzHUZbGYqoMyTKREVbZcqOuf root@centos7.linuxvmimages.local-2022-10-01
+
+  tasks:
+
+  - name: "Create .ssh"
+    ansible.builtin.file:
+      path: /root/.ssh 
+      state: directory
+      mode: '0700'
+  
+  - name: "Create authorized_keys"
+    ansible.builtin.file:
+      path: /root/.ssh/authorized_keys
+      state: touch
+      mode: '0600'
+  
+  - name: "Add ssh key"
+    lineinfile:
+      path: /root/.ssh/authorized_keys
+      line: "{{ server_ssh_key }}"
+  
+  - name: "Configure sshd"
+    lineinfile:
+      path: "/etc/ssh/sshd_config"
+      regex: '^PermitRootLogin\s*no'
+      #line: "PermitRootLogin yes"
+      line: "PermitRootLogin without-password"
+      state: present
+    notify:
+    - Restart SSHD
+
+

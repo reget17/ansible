@@ -1,0 +1,28 @@
+---
+# tasks file for create_users
+# Choose user_creating_list 1 if only default unix users
+# Choose user_creating_list 2 if unix + Irina + Sasha + Polina
+# Choose user_creating_list 3 if unix + Anya + Irina
+
+- name: Create users mode_1
+  user:
+      name: "{{ item.uusername }}"
+      password: "{{ item.passwd | password_hash('sha512') }}"
+  with_items: "{{ mode_1 }}"
+  when: user_creating_list == 1
+
+- name: Create users mode_2
+  user:
+      name: "{{ item.uusername }}"
+      password: "{{ item.passwd | password_hash('sha512') }}"
+  with_items: "{{ mode_1 + mode_2 }}"
+  when: user_creating_list == 2
+
+- name: Create users mode_3
+  user:
+      name: "{{ item.uusername }}"
+      password: "{{ item.passwd | password_hash('sha512') }}"
+  with_items: "{{ mode_1 + mode_3}}"
+  when: user_creating_list == 3
+
+  

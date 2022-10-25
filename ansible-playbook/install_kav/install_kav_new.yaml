@@ -1,0 +1,86 @@
+
+---
+- hosts: all
+  become: true
+  tasks:
+
+    - name: Copy Files
+      copy:
+        src: /etc/ansible/playbooks/install_kav/KES
+        dest: /home/ansible
+
+    - name: checking service status
+      command: systemctl status kesl
+      register: result
+      ignore_errors: yes
+
+    - name: showing services status
+      debug:
+        msg:
+            - "{{ result.stderr_lines }}"
+            - "{{ result.stdout_lines }}"
+
+    - name: "Install kesl"
+      yum:
+        name: /home/ansible/KES/kesl-11.1.0-3013.cert.x86_64.rpm
+
+    - name: sh script
+      shell: /opt/kaspersky/kesl/bin/kesl-setup.pl --autoinstall /home/ansible/KES/kesl.ini
+
+    - name: "Install kesl agent"
+      yum:
+        name: /home/ansible/KES/klnagent64-11.0.0-38.x86_64.rpm
+
+    # - include: centos7_repo.yml
+
+    - name: "Install expect package"
+      yum:
+        name: expect
+        enablerepo: temp
+        disablerepo: '*'
+
+    - name: Install with expect
+      no_log: True
+      shell: |
+        set timeout 300
+        spawn  /opt/kaspersky/klnagent64/lib/bin/setup/postinstall.pl
+
+        expect "*Please enter Administration Server DNS-name or static IP-address*"
+        send "10.24.223.5\r"
+
+        expect "*Please enter Administration Server port number*"
+        send "14000\r"
+
+        expect "*Please enter Administration Server ssl port number*"
+        send "13000\r"
+
+        expect "*to use non-encrypted communication*"
+        send "y\r"
+
+        expect "*Please choose connection gateway mode:*"
+        send "2\r"
+        interact
+        exit 0
+      args:
+        executable: /usr/bin/expect
+
+    - name: License
+      shell:
+          /opt/kaspersky/klnagent64/bin/klnagchk
+      ignore_errors: yes
+
+    - name: checking service status after install
+      command: systemctl status kesl
+      register: result
+      ignore_errors: yes
+
+    - name: showing services status
+      debug:
+        msg:
+            - "{{ result.stderr_lines }}"
+            - "{{ result.stdout_lines }}"
+
+    - name: Delete KES folder
+      file:
+        path: /home/ansible/KES
+        state: absent

@@ -1,0 +1,44 @@
+
+---
+- hosts: all
+  become: true
+
+  roles: 
+  - role: setup_centos7
+    vars_prompt:
+    - name: passwd
+      prompt: "Enter your root password?"
+      private: yes
+  - role: create_users
+    vars:
+      # Choose user_creating_list 1 if only default unix users
+      # Choose user_creating_list 2 if unix + Irina + Sasha + Polina
+      # Choose user_creating_list 3 if unix + Anya + Irina
+      user_creating_list: 1
+  
+  tasks:
+  - name: "Configure sshd"
+    lineinfile:
+      path: "/etc/ssh/sshd_config"
+      regex: '^PermitRootLogin\s*yes'
+      line: "PermitRootLogin no"
+      state: present
+    notify:
+    - Restart SSHD
+
+  - getent:
+        database: passwd
+
+  - name: "disable users"
+    user:
+      name: "{{ item.name }}"
+      shell: /sbin/nologin
+    with_items: 
+      - adminptk
+      - adminos
+    when:
+      - item in ansible_facts.getent_passwd
+
+    
+
+

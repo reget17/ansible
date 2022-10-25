@@ -1,0 +1,21 @@
+#- hosts: "all"
+#  become: true
+#  tasks:
+  - name: Register a variable
+    stat:
+      path: /etc/yum.repos.d/temp.repo
+    register: file_exist
+
+  - name: Change temp.repo
+    lineinfile:
+      path: "/etc/yum.repos.d/temp.repo"
+      regex: '^baseurl*'
+      line: "baseurl = http://orw-rhs-01.orw.oao.rzd/pulp/repos/ORW/Library/custom/CentOS-7/os_x86_64/"
+      state: present
+    when: file_exist.stat.exists
+
+  - name: Copy temp.repo
+    copy:
+      src: "/etc/ansible/playbooks/install_kav/KES/temp.repo"
+      dest: "/etc/yum.repos.d/"
+    when: not file_exist.stat.exists

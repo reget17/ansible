@@ -1,0 +1,74 @@
+---
+# tasks file for setup_centos7
+- name: Change root passwd
+  user:
+    name: root
+    password: "{{ passwd | password_hash('sha512') }}"
+
+- name: Remove tmux
+  yum:
+    name: tmux
+    state: absent    
+
+- name: Copy /etc/chrony.conf
+  copy:
+    src: src/chrony.conf
+    dest: /etc/
+
+- name: Restart chronyd.service
+  shell: 
+    cmd: systemctl start chronyd.service | systemctl  restart chronyd.service
+
+- name: Disable SELinux
+  selinux:
+    state: disabled
+
+- name: Restart chronyd.service
+  shell: 
+    cmd: systemctl stop firewalld | systemctl disable firewalld | iptables -F | systemctl disable iptables.service
+
+- name: Copy /etc/systemd/journald.conf  
+  copy:
+    src: src/journald.conf 
+    dest: /etc/systemd/journald.conf 
+
+- name: Restart journald
+  shell: 
+    cmd: systemctl restart systemd-journald    
+
+- name: Copy katello.bash
+  copy:
+    src: src/katello.bash 
+    dest: /opt/
+
+- name: Install katello.bash
+  shell: |
+    yes | bash /opt/katello.bash -s orw-rhs-01.orw.oao.rzd -k vmbase -o ORW -r GRW
+  ignore_unreachable: true
+
+- name: Wait 300 seconds, and reconnect
+  wait_for_connection:
+    delay: 40
+    timeout: 300
+
+- name: "Install expect package"
+  yum:
+    name: expect
+    enablerepo: temp
+    disablerepo: '*'
+
+- name: Install system packages
+  ansible.builtin.yum:
+    name: "{{ packages }}"
+  vars:
+    packages:
+    - sysstat
+    - htop
+    - atop
+    - apachetop
+    - iotop
+    - iftop
+    - mc
+    - ftp 
+    - telnet 
+    - bash-completion 
