@@ -1,0 +1,31 @@
+---
+- hosts: all
+  become: true
+  vars_files:
+  # users_file.txt   - variable: users_data {user, path} 
+  # users_passwd.txt  - variable: users_passwd: {name: password}
+    - src/users_file.txt
+    - src/users_passwd.txt
+
+  tasks:
+    # - name: test
+    #   debug: 
+    #     var: users_passwd
+    - name: All undefined password
+      lineinfile: 
+        path: undefined_pass.txt
+        line: "{{ item.user }}"
+        create: yes
+      delegate_to: 127.0.0.1
+      when: users_passwd[item.user] is undefined
+      loop: "{{ users_data }}"
+
+    - name: Create User 
+      user:
+        name: "{{ item.user }}"
+        password: "{{ users_passwd[item.user] | password_hash('sha512') }}"
+        home: "{{ item.path }}"
+        shell: /bin/false
+      when: users_passwd[item.user] is defined
+      loop: "{{ users_data }}"
+          
