@@ -3,14 +3,19 @@
   become: true
   vars_files:
   # users_file.txt   - variable: users_data {user, path} 
+      # ---
+      # users_data: 
+      # - { user: dez_video_rw, path: "/srv/ftp/dcnti_video_db/REG-3/DEZ" }    
+      
   # users_passwd.txt  - variable: users_passwd: {name: password}
+      # ---
+      # users_passwd: 
+      #     nivc_video: "0ogh5d"
     - src/users_file.txt
     - src/users_passwd.txt
 
   tasks:
-    # - name: test
-    #   debug: 
-    #     var: users_passwd
+
     - name: All undefined password
       lineinfile: 
         path: undefined_pass.txt
