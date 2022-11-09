@@ -1,0 +1,43 @@
+---
+- hosts: all
+  become: true
+  tasks:
+  - name: Block centos7
+
+    - name: Copy Files
+      copy:
+        src: src/tivoly_config7.bash
+        dest: /home/ansible
+
+    - name: Install with expect
+      no_log: True
+      shell: |
+        set timeout 1000
+        spawn  /home/ansible/tivoly_config7.bash
+
+        expect "*Enter number of  your TEMS*"
+        send "6\r"
+
+        interact
+        exit 0
+      args:
+        executable: /usr/bin/expect
+        
+    - name: Pause for 30 seconds for starting ITM
+      ansible.builtin.pause:
+        seconds: 30
+
+    - name: grep ITM
+      shell: ps -ef | grep -i itm
+      register: result
+      ignore_errors: yes
+
+    - name: Show grep result
+      debug:
+        msg:
+            - "{{ result.stderr_lines }}"
+            - "{{ result.stdout_lines }}"
+
+    when: 
+      - ansible_facts['distribution'] == "CentOS"
+      - ansible_facts['distribution_major_version'] == "7"
