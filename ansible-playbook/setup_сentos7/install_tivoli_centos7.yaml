@@ -3,13 +3,24 @@
   become: true
   tasks:
   - name: Block centos7
+    block:
 
     - name: Copy Files
       copy:
         src: src/tivoly_config7.bash
         dest: /home/ansible
 
-    - name: Install with expect
+    - name: Check if folder /opt/IBM/ITM exist
+      stat:
+        path: "/opt/IBM/ITM"
+      register: file_data
+
+    - name: Example using fail and when together
+      ansible.builtin.fail:
+        msg: "Folder /opt/IBM/ITM already exists"
+      when: file_data.stat.exists
+
+    - name: Install tivoli with expect
       no_log: True
       shell: |
         set timeout 1000
@@ -22,7 +33,7 @@
         exit 0
       args:
         executable: /usr/bin/expect
-        
+
     - name: Pause for 30 seconds for starting ITM
       ansible.builtin.pause:
         seconds: 30
